@@ -1,0 +1,17 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Deepfake Playback</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;display:flex;align-items:center;justify-content:center}
+  video{max-width:100vw;max-height:100vh}
+</style></head>
+<body>
+<video id="v" autoplay loop muted playsinline></video>
+<script>
+  const params=new URLSearchParams(location.search);
+  const which=params.get('v')||'syn';
+  const src=which.startsWith('real')
+    ? ['id0_0000.mp4','id0_0002.mp4','id0_0004.mp4','id0_0006.mp4'][+which.slice(4)||0]
+    : ['id0_id16_0005.mp4','id0_id2_0001.mp4','id0_id1_0003.mp4','id0_id16_0009.mp4'][+which.slice(3)||0];
+  document.getElementById('v').src='/fakes/'+src;
+</script>
+</body></html>

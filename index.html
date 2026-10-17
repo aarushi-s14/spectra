@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPECTRA · Deepfake Detection</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; font-family:-apple-system,"SF Pro Display","Segoe UI",sans-serif;
+    background:#fbfaff; color:#241b3a;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection { background:#ddd0f5; }
+
+  /* ---------- nav ---------- */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    background:rgba(251,250,255,.8); backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(124,58,237,.08);
+  }
+  .nav-inner {
+    max-width:1120px; margin:0 auto; padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand { display:flex; align-items:center; gap:2px; font-weight:750; font-size:17px; letter-spacing:1.5px; }
+  .logomark {
+    width:30px; height:30px; border-radius:9px; margin-right:10px;
+    background:linear-gradient(135deg,#7c3aed,#a78bfa);
+    display:inline-flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 8px rgba(124,58,237,.28); flex:none;
+  }
+  .logomark svg { width:18px; height:18px; }
+  .brand .dot { color:#7c3aed; }
+  .nav-links { display:flex; gap:26px; font-size:13.5px; color:#6b5f8d; align-items:center; }
+  .nav-links a { color:inherit; text-decoration:none; font-weight:500; line-height:36px; }
+  .nav-links a:hover { color:#7c3aed; }
+  .nav-cta {
+    background:linear-gradient(135deg,#7c3aed,#8b5cf6); color:#fff !important;
+    padding:0 18px; line-height:36px; border-radius:999px;
+    box-shadow:0 2px 8px rgba(124,58,237,.25); display:inline-block;
+  }
+  .nav-cta:hover { color:#fff !important; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    padding:170px 24px 90px; text-align:center; position:relative; overflow:hidden;
+  }
+  .hero::before {
+    content:''; position:absolute; inset:-40% -20% auto; height:130%;
+    background:
+      radial-gradient(600px 300px at 30% 20%, rgba(139,92,246,.14), transparent 65%),
+      radial-gradient(500px 260px at 70% 10%, rgba(124,58,237,.10), transparent 60%);
+    pointer-events:none;
+  }
+  .eyebrow {
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:12px; font-weight:650; letter-spacing:1.6px; text-transform:uppercase;
+    color:#7c3aed; background:#f3eefe; border:1px solid #e4d9f8;
+    padding:7px 16px; border-radius:999px; position:relative;
+  }
+  .eyebrow .pulse {
+    width:7px; height:7px; border-radius:50%; background:#7c3aed;
+    box-shadow:0 0 0 0 rgba(124,58,237,.5); animation:pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow:0 0 0 0 rgba(124,58,237,.45); }
+    70% { box-shadow:0 0 0 8px rgba(124,58,237,0); }
+    100% { box-shadow:0 0 0 0 rgba(124,58,237,0); }
+  }
+  h1.title {
+    font-size:clamp(44px,7vw,84px); line-height:1.02; margin:26px 0 0;
+    font-weight:800; letter-spacing:-2.5px; position:relative;
+  }
+  h1.title .grad {
+    background:linear-gradient(120deg,#7c3aed 10%,#a78bfa 60%,#c4b5fd 90%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero .lede {
+    max-width:620px; margin:24px auto 0; font-size:19px; line-height:1.6; color:#6b5f8d;
+    position:relative;
+  }
+  .hero-cta { display:flex; gap:12px; justify-content:center; margin-top:36px; position:relative; }
+  .btn-big {
+    font-size:15.5px; font-weight:600; padding:15px 34px; border-radius:12px;
+    cursor:pointer; border:none; font-family:inherit; text-decoration:none; display:inline-block;
+    transition:all .2s;
+  }
+  .btn-primary {
+    background:linear-gradient(135deg,#7c3aed,#8b5cf6); color:#fff;
+    box-shadow:0 6px 20px rgba(124,58,237,.35);
+  }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 26px rgba(124,58,237,.42); }
+  .btn-ghost { background:#fff; color:#4c3a80; border:1px solid #ddd0f2; }
+  .btn-ghost:hover { background:#f6f2fd; }
+  .hero-stats {
+    display:flex; gap:0; justify-content:center; margin-top:64px; position:relative;
+    border-top:1px solid #eee7f9; padding-top:0;
+  }
+  .hstat { padding:26px 44px; border-right:1px solid #eee7f9; }
+  .hstat:last-child { border-right:none; }
+  .hstat .n { font-size:34px; font-weight:800; letter-spacing:-1px; color:#2b2140; }
+  .hstat .n span { color:#7c3aed; }
+  .hstat .l { font-size:12.5px; color:#8d84a3; margin-top:4px; font-weight:500; }
+
+  /* ---------- tool ---------- */
+  .tool-section { padding:30px 24px 40px; }
+  .tool-card {
+    max-width:1120px; margin:0 auto; background:#fff;
+    border:1px solid #ece5f7; border-radius:24px; padding:34px;
+    box-shadow:0 2px 4px rgba(36,27,58,.03), 0 20px 60px rgba(124,58,237,.08);
+  }
+  .tool-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:20px; }
+  .tool-head h2 { font-size:22px; margin:0; font-weight:750; letter-spacing:-.5px; }
+  .tool-head .sub { font-size:13px; color:#8d84a3; }
+  .dropzone {
+    border:2px dashed #d8ccf0; border-radius:16px; padding:56px 24px;
+    text-align:center; cursor:pointer; transition:all .2s; background:#fcfbff;
+  }
+  .dropzone:hover, .dropzone.drag {
+    border-color:#7c3aed; background:#f6f2fd; transform:translateY(-1px);
+    box-shadow:0 6px 20px rgba(124,58,237,.10);
+  }
+  .dropzone .big { font-size:18px; font-weight:650; margin:0 0 4px; }
+  .btns { display:flex; gap:10px; justify-content:center; margin-top:18px; }
+  button {
+    background:#fff; color:#4c3a80; border:1px solid #ddd0f2;
+    padding:10px 20px; border-radius:10px; cursor:pointer; font-size:14px; font-weight:550;
+    transition:all .15s; font-family:inherit;
+  }
+  button:hover { background:#f6f2fd; }
+  button.primary {
+    background:linear-gradient(135deg,#7c3aed,#8b5cf6); color:#fff; border-color:transparent;
+    box-shadow:0 3px 10px rgba(124,58,237,.30);
+  }
+  button.primary:hover { transform:translateY(-1px); }
+  .results { display:grid; grid-template-columns:1.05fr .95fr; gap:26px; margin-top:26px; }
+  .hidden { display:none; }
+  .verdict-card {
+    border-radius:16px; padding:20px 24px;
+    background:#f8f5fe; border:1px solid #e9e0f8;
+    display:flex; align-items:center; gap:20px; transition:all .35s;
+  }
+  .verdict-card.fake { background:#fef2f2; border-color:#fecaca; }
+  .verdict-card.real { background:#f0fdf4; border-color:#bbf7d0; }
+  .verdict-card.uncertain { background:#fffbeb; border-color:#fde68a; }
+  .verdict { font-size:26px; font-weight:750; letter-spacing:-.4px; }
+  .verdict.fake { color:#dc2626; } .verdict.real { color:#059669; }
+  .verdict.uncertain { color:#b45309; }
+  .meter { flex:1; height:10px; border-radius:5px; background:rgba(0,0,0,.07); overflow:hidden; }
+  .meter i {
+    display:block; height:100%; border-radius:5px; width:0; transition:width .6s;
+    background:linear-gradient(90deg,#059669,#d97706,#dc2626);
+  }
+  .stats { display:flex; gap:14px; flex-wrap:wrap; }
+  .stat {
+    flex:1; min-width:110px; background:#faf9fd; border:1px solid #eee7f9;
+    border-radius:12px; padding:12px 16px;
+  }
+  .stat .k { font-size:11px; color:#8d84a3; text-transform:uppercase; letter-spacing:.7px; font-weight:650; }
+  .stat .v { font-size:19px; font-weight:700; color:#2b2140; margin-top:3px; }
+  .panel-label {
+    font-size:11px; font-weight:700; color:#7c3aed; text-transform:uppercase;
+    letter-spacing:1px; margin:20px 0 8px;
+  }
+  .media-box { border:1px solid #ece5f7; border-radius:12px; overflow:hidden; background:#0b0714; }
+  .media-box.light { background:#faf9fd; }
+  img.spectrum { width:100%; display:block; image-rendering:pixelated; }
+  canvas#timeline { width:100%; height:120px; display:block; }
+  .spinner { text-align:center; padding:36px; color:#7c3aed; font-weight:550; }
+  .spinner::after {
+    content:''; display:block; width:26px; height:26px; margin:12px auto 0;
+    border:3px solid #e2d6f8; border-top-color:#7c3aed; border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* ---------- how it works ---------- */
+  .how { max-width:1120px; margin:0 auto; padding:90px 24px 40px; }
+  .sec-eyebrow {
+    text-align:center; font-size:12px; font-weight:700; letter-spacing:1.8px;
+    text-transform:uppercase; color:#7c3aed;
+  }
+  .sec-title {
+    text-align:center; font-size:clamp(30px,4vw,44px); font-weight:800;
+    letter-spacing:-1.5px; margin:12px 0 0;
+  }
+  .sec-lede { text-align:center; max-width:560px; margin:16px auto 0; color:#6b5f8d; font-size:16.5px; line-height:1.6; }
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:54px; }
+  .step {
+    background:#fff; border:1px solid #ece5f7; border-radius:18px; padding:28px;
+    box-shadow:0 1px 2px rgba(36,27,58,.03); transition:all .25s;
+  }
+  .step:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(124,58,237,.10); }
+  .step .num {
+    width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#7c3aed,#a78bfa);
+    color:#fff; font-weight:750; font-size:15px; display:flex; align-items:center; justify-content:center;
+  }
+  .step h3 { font-size:16.5px; margin:16px 0 8px; font-weight:700; letter-spacing:-.3px; }
+  .step p { font-size:13.5px; line-height:1.6; color:#6b5f8d; margin:0; }
+
+  /* ---------- spectrum demo strip ---------- */
+  .strip {
+    max-width:1120px; margin:80px auto 0; padding:0 24px;
+    display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;
+  }
+  .strip h2 { font-size:clamp(26px,3.4vw,38px); font-weight:800; letter-spacing:-1.2px; line-height:1.15; margin:0; }
+  .strip p { color:#6b5f8d; font-size:16px; line-height:1.65; }
+  .strip .fake-spec {
+    border-radius:20px; background:#0b0714; padding:18px;
+    box-shadow:0 20px 60px rgba(124,58,237,.18);
+  }
+  .strip .fake-spec img { width:100%; display:block; border-radius:10px; image-rendering:pixelated; }
+  .strip .cap {
+    display:flex; justify-content:space-between; color:#9a8fb8; font-size:12px; margin-top:10px;
+    font-family:ui-monospace,monospace;
+  }
+
+  footer {
+    text-align:center; color:#a99fc0; font-size:13px; padding:70px 24px 50px;
+  }
+  footer .fbrand { font-weight:750; color:#4c3a80; font-size:15px; letter-spacing:.5px; margin-bottom:6px; }
+  @media (max-width:880px){
+    .results,.steps,.strip { grid-template-columns:1fr; }
+    .hero-stats { flex-direction:column; align-items:center; }
+    .hstat { border-right:none; border-bottom:1px solid #eee7f9; }
+    .nav-links { display:none; }
+  }
+</style>
+</head>
+<body id="top">
+<nav>
+  <div class="nav-inner">
+    <a href="#top" class="brand" style="text-decoration:none;color:inherit"><span class="logomark"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12h3l2-7 3 14 3-10 2 5h4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>SPECTRA<span class="dot">.</span></a>
+    <div class="nav-links">
+      <a href="#tool">Detector</a>
+      <a href="#how">How It Works</a>
+      <a href="#science">The Science</a>
+      <a href="#tool" class="nav-cta">Scan Now</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <span class="eyebrow"><span class="pulse"></span>Real-time spectral forensics</span>
+  <h1 class="title">Catch deepfakes<br>at the speed of <span class="grad">light</span>.</h1>
+  <p class="lede">
+    AI generators leave invisible fingerprints in the frequency domain.
+    SPECTRA reads them from the Fourier spectrum, with no GPU and no neural network, and returns a verdict in milliseconds.
+  </p>
+  <div class="hero-cta">
+    <a href="#tool" class="btn-big btn-primary">Try the detector</a>
+    <a href="#how" class="btn-big btn-ghost">How it works</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat"><div class="n">0.90</div><div class="l">balanced accuracy · face-swap videos</div></div>
+    <div class="hstat"><div class="n">0.97</div><div class="l">true-positive rate · diffusion images</div></div>
+    <div class="hstat"><div class="n">3<span>ms</span></div><div class="l">per frame · CPU only</div></div>
+  </div>
+</section>
+
+<section class="tool-section" id="tool">
+  <div class="tool-card">
+    <div class="tool-head">
+      <h2>Detector</h2>
+      <span class="sub">image or video · runs locally · nothing uploaded anywhere</span>
+    </div>
+    <div class="dropzone" id="drop">
+      <p class="big">Drop an image or video</p>
+      <p class="sub">the spectrum is computed on your machine. No cloud, no storage</p>
+      <div class="btns">
+        <button class="primary" onclick="fileInput.click()">Choose file</button>
+        <button onclick="startCam()">Use webcam</button>
+        <button id="camStop" onclick="stopCam()" class="hidden">Stop camera</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+    </div>
+    <div id="camPanel" class="hidden" style="margin-top:18px">
+      <div class="media-box"><video id="camView" autoplay playsinline muted style="width:100%;display:block"></video></div>
+      <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+        <button class="primary" onclick="scanOnce()">Scan frame</button>
+        <button onclick="toggleLive()" id="liveBtn">Live scan: off</button>
+        <span class="sub" id="liveStatus"></span>
+      </div>
+    </div>
+    <div class="spinner hidden" id="spin">Analyzing spectrum…</div>
+    <div class="results hidden" id="results">
+      <div>
+        <div class="verdict-card" id="verdictCard">
+          <div class="verdict" id="verdict">&middot;</div>
+          <div class="meter"><i id="meterFill"></i></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="k">Confidence</div><div class="v" id="conf">&middot;</div></div>
+          <div class="stat"><div class="k">Latency</div><div class="v" id="latency">&middot;</div></div>
+          <div class="stat" id="fpsWrap"><div class="k">Throughput</div><div class="v" id="fps">&middot;</div></div>
+        </div>
+        <div id="mediaWrap" class="hidden">
+          <p class="panel-label">Uploaded media</p>
+          <div class="media-box"><video id="vid" controls style="width:100%;display:block"></video></div>
+        </div>
+        <div id="timelineWrap" class="hidden">
+          <p class="panel-label">Per-frame fake score</p>
+          <div class="media-box light"><canvas id="timeline"></canvas></div>
+        </div>
+      </div>
+      <div>
+        <p class="panel-label" style="margin-top:0">Average log-magnitude spectrum · DC centered</p>
+        <div class="media-box"><img class="spectrum" id="spectrum" alt="spectrum heatmap"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="sec-eyebrow">Pipeline</div>
+  <h2 class="sec-title">Physics, Not Vibes.</h2>
+  <p class="sec-lede">Every generative model must upscale its output. Upscaling is periodic by construction, and periodicity is exactly what a Fourier transform sees.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <h3>Patch &amp; Filter</h3>
+      <p>Each frame is cut into 32×32 patches and pushed through a Butterworth high-pass, stripping natural image structure and isolating fine texture.</p>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <h3>Spectral Fingerprint</h3>
+      <p>A 2D FFT turns every patch into a frequency fingerprint. Patches are averaged, and the radial energy profile is measured.</p>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <h3>Learned Verdict</h3>
+      <p>Grid-peak prominence, axis spikes, and band ratios feed a calibrated classifier trained on BigGAN, Stable Diffusion, and CelebDF face-swaps.</p>
+    </div>
+  </div>
+</section>
+
+<section class="strip" id="science">
+  <div>
+    <h2>See What the Model Sees.</h2>
+    <p style="margin-top:18px">
+      On the right: a real upscaler fingerprint: sharp spikes at rational
+      frequencies, on-axis, periodic. Natural photos decay smoothly like
+      1/f². That asymmetry is the entire signal, and it survives JPEG
+      compression, resizing, and re-encoding.
+    </p>
+    <p>
+      Because detection is pure signal processing, it runs at
+      <b style="color:#4c3a80">~3&nbsp;ms per frame on a laptop CPU</b>, fast
+      enough to scan live video call-by-call.
+    </p>
+  </div>
+  <div class="fake-spec">
+    <img src="data:image/png;base64,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" id="stripSpec" alt="example spectrum">
+    <div class="cap"><span>32×32 patch FFT · log magnitude</span><span>256×256 frame</span></div>
+  </div>
+</section>
+
+<footer>
+  <div class="fbrand">SPECTRA.</div>
+  <div>Spectral front-end approach · YC "Proving You're Human" RFS</div>
+</footer>
+<input type="file" id="camShot" accept="image/*" hidden>
+<script>
+const drop=document.getElementById('drop'), fileInput=document.getElementById('fileInput');
+const spin=document.getElementById('spin'), results=document.getElementById('results');
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});
+drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
+drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');
+  if(e.dataTransfer.files.length) handle(e.dataTransfer.files[0]);});
+fileInput.addEventListener('change',()=>fileInput.files[0]&&handle(fileInput.files[0]));
+
+function handle(f){
+  spin.classList.remove('hidden'); results.classList.add('hidden');
+  const isVideo=f.type.startsWith('video/');
+  const fd=new FormData(); fd.append('file',f);
+  fetch(isVideo?'/analyze/video':'/analyze/image',{method:'POST',body:fd})
+    .then(r=>r.json()).then(show).catch(e=>{spin.classList.add('hidden');alert('Error: '+e)});
+}
+
+function setVerdict(verdict, conf, latencyMs, d){
+  const card=document.getElementById('verdictCard');
+  card.className='verdict-card '+(verdict.includes('ai')?'fake':verdict==='uncertain'?'uncertain':'real');
+  const v=document.getElementById('verdict');
+  v.textContent=verdict;
+  v.className='verdict '+(verdict.includes('ai')?'fake':verdict==='uncertain'?'uncertain':'real');
+  document.getElementById('meterFill').style.width=(conf*100).toFixed(0)+'%';
+  document.getElementById('conf').textContent=(conf*100).toFixed(1)+'%';
+  document.getElementById('latency').textContent=latencyMs+' ms';
+  document.getElementById('spectrum').src='data:image/png;base64,'+d.spectrum_b64;
+  const strip=document.getElementById('stripSpec');
+  strip.src='data:image/png;base64,'+d.spectrum_b64;
+}
+
+function show(d){
+  spin.classList.add('hidden');
+  if(d.error){alert(d.error);return}
+  results.classList.remove('hidden');
+  setVerdict(d.verdict, d.confidence, d.latency_ms, d);
+  const mediaWrap=document.getElementById('mediaWrap');
+  const tlWrap=document.getElementById('timelineWrap');
+  const vid=document.getElementById('vid');
+  if(d.timeline_scores){
+    document.getElementById('fps').textContent=d.fps+' frames/s';
+    drawTimeline(d.timeline_scores);
+    tlWrap.classList.remove('hidden');
+    mediaWrap.classList.remove('hidden');
+    if(lastURL) URL.revokeObjectURL(lastURL);
+    lastURL=null;
+    vid.src=d.media_url;
+    vid.load();
+    vid.onloadeddata=()=>{ try{ vid.currentTime=0.1; }catch(e){} };
+  } else {
+    document.getElementById('fpsWrap').style.display='none';
+    tlWrap.classList.add('hidden');
+    mediaWrap.classList.add('hidden');
+    vid.pause();
+  }
+}
+let lastFile=null, lastURL=null;
+const _handle=handle;
+handle=function(f){lastFile=f;_handle(f)};
+
+function drawTimeline(scores){
+  const c=document.getElementById('timeline'); c.style.display='block';
+  const ctx=c.getContext('2d'); c.width=c.clientWidth*2; c.height=240;
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.strokeStyle='#3b2a5c'; ctx.beginPath();
+  ctx.moveTo(0,c.height*0.5); ctx.lineTo(c.width,c.height*0.5); ctx.stroke();
+  ctx.strokeStyle='#a78bfa'; ctx.lineWidth=3; ctx.beginPath();
+  scores.forEach((s,i)=>{
+    const x=i/(scores.length-1||1)*c.width, y=c.height-s*c.height;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  });
+  ctx.stroke();
+  ctx.fillStyle='#9a8fb8'; ctx.font='20px sans-serif';
+  ctx.fillText('fake score per frame',10,28);
+}
+
+async function startCam(){
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:480}});
+  } catch(e) { alert('Camera unavailable: '+e.message); return; }
+  const view=document.getElementById('camView');
+  view.srcObject=camStream;
+  document.getElementById('camPanel').classList.remove('hidden');
+  document.getElementById('camStop').classList.remove('hidden');
+  await view.play();
+  liveInterval = null;
+}
+let camStream=null, liveInterval=null, liveOn=false;
+
+function stopCam(){
+  if(camStream) camStream.getTracks().forEach(t=>t.stop());
+  camStream=null;
+  document.getElementById('camPanel').classList.add('hidden');
+  document.getElementById('camStop').classList.add('hidden');
+  if(liveInterval){clearInterval(liveInterval); liveInterval=null;}
+  liveOn=false;
+  document.getElementById('liveBtn').textContent='Live scan: off';
+  document.getElementById('liveStatus').textContent='';
+}
+
+function grabFrame(){
+  const view=document.getElementById('camView');
+  const c=document.createElement('canvas');
+  c.width=view.videoWidth||640; c.height=view.videoHeight||480;
+  c.getContext('2d').drawImage(view,0,0,c.width,c.height);
+  return c;
+}
+
+function scanOnce(){
+  if(!camStream){alert('Start the camera first');return}
+  const c=grabFrame();
+  c.toBlob(b=>{
+    spin.classList.remove('hidden'); results.classList.add('hidden');
+    const fd=new FormData(); fd.append('file',b,'webcam.png');
+    fetch('/analyze/image',{method:'POST',body:fd})
+      .then(r=>r.json()).then(show).catch(e=>{spin.classList.add('hidden');alert('Error: '+e)});
+  },'image/png');
+}
+
+let scoreHistory=[];
+function median(a){const s=[...a].sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2}
+function applyScore(score, d, status, extra){
+  scoreHistory.push(score);
+  if(scoreHistory.length>5) scoreHistory.shift();
+  const s=scoreHistory.length>=3?median(scoreHistory):score;
+  const verdict=s>0.6?'likely-ai-generated':s<0.4?'likely-real':'uncertain';
+  setVerdict(verdict, Math.abs(s-0.5)*2, d.latency_ms, d);
+  if(status) status.textContent=extra||'';
+}
+
+function toggleLive(){
+  if(!camStream){alert('Start the camera first');return}
+  const btn=document.getElementById('liveBtn'), status=document.getElementById('liveStatus');
+  if(liveOn){
+    clearInterval(liveInterval); liveInterval=null; liveOn=false;
+    btn.textContent='Live scan: off'; status.textContent='';
+  } else {
+    liveOn=true;
+    scoreHistory=[];
+    btn.textContent='Live scan: ON';
+    let scanning=false, n=0;
+    liveInterval=setInterval(()=>{
+      if(scanning) return;
+      scanning=true;
+      const c=grabFrame();
+      c.toBlob(b=>{
+        const fd=new FormData(); fd.append('file',b,'webcam.png');
+        fetch('/analyze/image',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+          scanning=false; n++;
+          if(!d.error) {
+            spin.classList.add('hidden'); results.classList.remove('hidden');
+            applyScore(d.score, d, status, `scan #${n} · median of ${Math.min(scoreHistory.length,5)} frames`);
+            document.getElementById('fpsWrap').style.display='none';
+            document.getElementById('timelineWrap').classList.add('hidden');
+            document.getElementById('mediaWrap').classList.add('hidden');
+          }
+        }).catch(()=>scanning=false);
+      },'image/png');
+    }, 700);
+  }
+}
+
+/* reveal-on-scroll */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){ e.target.style.opacity=1; e.target.style.transform='none'; io.unobserve(e.target); }
+}),{threshold:.12});
+document.querySelectorAll('.step,.strip,.tool-card,.hstat').forEach(el=>{
+  el.style.opacity=0; el.style.transform='translateY(18px)';
+  el.style.transition='opacity .6s ease, transform .6s ease';
+  io.observe(el);
+});
+
+</script>
+</body>
+</html>

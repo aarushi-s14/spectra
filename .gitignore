@@ -1,0 +1,7 @@
+__pycache__/
+media/
+*.pyc
+.DS_Store
+spectral_head_frame.json
+video_probs_debug.npy
+blend_eval.npy
